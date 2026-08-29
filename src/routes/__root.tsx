@@ -7,10 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { VyzunProvider, useVyzun } from "@/lib/vyzun-store";
+import { Splash } from "@/components/vyzun/Splash";
+import { Onboarding } from "@/components/vyzun/Onboarding";
+import { BottomNav } from "@/components/vyzun/BottomNav";
 
 function NotFoundComponent() {
   return (
