@@ -113,66 +113,62 @@ function ScanPage() {
       <main className="mx-auto max-w-lg px-5">
         <h1 className="sr-only">VYZUN AI Scanner</h1>
 
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {MODES.map(({ key, label, icon: Icon }) => (
+        {/* Mode pill switcher */}
+        <div className="flex gap-1.5 rounded-full border border-glass-border bg-card/60 p-1.5">
+          {MODES.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setMode(key)}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-full border border-glass-border px-4 py-2 text-sm tap active:tap-active",
-                mode === key && "bg-gradient-vyzun text-primary-foreground",
+                "flex-1 rounded-full px-3 py-2 text-xs font-semibold tap active:tap-active",
+                mode === key
+                  ? "bg-gradient-vyzun text-primary-foreground"
+                  : "text-muted-foreground",
               )}
             >
-              <Icon className="h-4 w-4" />
               {label}
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           {MODES.find((m) => m.key === mode)?.blurb} · AI entertainment experience, not a prediction.
         </p>
 
-        <div className="glass-card relative mt-5 aspect-[3/4] overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-vyzun opacity-10" />
-          <div className="absolute inset-6 rounded-3xl border border-glass-border" />
-          {["left-4 top-4", "right-4 top-4", "left-4 bottom-4", "right-4 bottom-4"].map((pos) => (
-            <span
-              key={pos}
-              className={cn("absolute h-8 w-8 rounded-lg border-2 border-cyan/70", pos)}
-              aria-hidden
-            />
-          ))}
+        {/* Viewfinder */}
+        <div className="neon-frame relative mt-5 aspect-[3/4] overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-vyzun opacity-[0.06]" />
           <div className="absolute inset-0 grid place-items-center">
-            <div className="anim-float h-40 w-32 rounded-[50%] border border-magenta/50 neon-ring" />
+            <div
+              className={cn(
+                "grid h-40 w-40 place-items-center rounded-full border-2 border-dashed border-cyan/60 neon-ring",
+                scanning ? "anim-float" : "",
+              )}
+            >
+              <Camera className="h-10 w-10 text-cyan" />
+            </div>
           </div>
           {scanning && (
             <div className="anim-scanline absolute inset-x-6 top-1/2 h-16 bg-gradient-vyzun opacity-40 blur-md" />
           )}
-          <p className="absolute inset-x-0 bottom-6 text-center text-xs text-muted-foreground">
+          <p className="absolute inset-x-0 top-5 text-center text-xs text-muted-foreground">
             {scanning ? "Reading your aura…" : "Align your face inside the frame"}
           </p>
-        </div>
 
-        {cameraError && (
-          <p className="mt-3 rounded-xl border border-destructive/40 px-4 py-3 text-sm text-muted-foreground">
-            {cameraError}
-          </p>
-        )}
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
           <button
             onClick={requestCamera}
+            aria-label="Flip camera"
             disabled={scanning}
-            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-vyzun py-3 font-semibold text-primary-foreground tap active:tap-active disabled:opacity-60"
+            className="absolute bottom-4 left-4 grid h-11 w-11 place-items-center rounded-full border border-glass-border bg-card/80 tap active:tap-active disabled:opacity-50"
           >
-            <Camera className="h-4 w-4" /> {scanning ? "Scanning…" : "Start Scan"}
+            <RefreshCcw className="h-5 w-5" />
           </button>
           <button
             onClick={() => fileRef.current?.click()}
+            aria-label="Choose from gallery"
             disabled={scanning}
-            className="flex items-center justify-center gap-2 rounded-xl border border-glass-border py-3 font-semibold tap active:tap-active disabled:opacity-60"
+            className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-full border border-glass-border bg-card/80 tap active:tap-active disabled:opacity-50"
           >
-            <ImageUp className="h-4 w-4" /> Upload
+            <ImageUp className="h-5 w-5" />
           </button>
           <input
             ref={fileRef}
@@ -182,6 +178,20 @@ function ScanPage() {
             onChange={() => runScan()}
           />
         </div>
+
+        {cameraError && (
+          <p className="mt-3 rounded-xl border border-destructive/40 px-4 py-3 text-sm text-muted-foreground">
+            {cameraError}
+          </p>
+        )}
+
+        <button
+          onClick={requestCamera}
+          disabled={scanning}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-vyzun py-4 text-base font-bold text-primary-foreground shadow-[var(--glow-cyan)] tap active:tap-active disabled:opacity-60"
+        >
+          <Sparkles className="h-5 w-5" /> {scanning ? "Scanning…" : "Scan my aura"}
+        </button>
 
         {card && (
           <section className="anim-rise mt-8">
