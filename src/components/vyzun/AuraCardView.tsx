@@ -125,7 +125,7 @@ export function AuraCardModal({
         <X className="h-5 w-5" />
       </button>
       <div className="anim-rise mx-auto mt-3 w-full max-w-sm">
-        <AuraCardView card={card} username={username} prime={prime} />
+        <AuraCardView card={card} username={username} prime={prime ?? false} />
         <button
           onClick={async () => {
             const text = `My VYZUN aura is ${card.score} (${card.rarity}). Beat my Aura → VYZUN`;
