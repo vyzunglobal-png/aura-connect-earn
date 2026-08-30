@@ -169,6 +169,31 @@
   box-shadow: var(--glow-cyan);
 }
 
+/* Gradient neon border on a solid navy surface. */
+@utility neon-frame {
+  position: relative;
+  background-color: var(--color-background);
+  border-radius: var(--radius-2xl);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background-image: var(--gradient-vyzun);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+}
+
 @utility tap {
   transition:
     transform 0.16s ease,
