@@ -66,26 +66,30 @@ function SecretsPage() {
     setDraft("");
   }
 
+  const link = `vyzun.app/ask/@${state.profile.username}`;
+
   return (
     <div className="pb-36">
-      <header className="sticky top-0 z-30 bg-background/75 px-5 py-4 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/secrets/chat"
-            className="flex items-center gap-2 rounded-full bg-gradient-vyzun px-4 py-2 text-sm font-semibold text-primary-foreground tap active:tap-active"
-          >
-            <Ghost className="h-4 w-4" /> Secret Chat
-          </Link>
-          <h1 className="font-display text-lg font-semibold">Secrets</h1>
-        </div>
-        <div className="mt-4 flex gap-2">
+      <header className="sticky top-0 z-30 mx-auto max-w-lg bg-background px-5 py-4">
+        <Link
+          to="/secrets/chat"
+          className="flex items-center justify-center gap-2 tap active:tap-active"
+        >
+          <Ghost className="h-6 w-6 text-cyan" />
+          <h1 className="text-gradient font-display text-2xl font-bold drop-shadow-[0_0_18px_rgba(0,240,255,0.35)]">
+            Secret Chat
+          </h1>
+        </Link>
+        <div className="mt-4 flex gap-1.5 rounded-full border border-glass-border bg-card/60 p-1.5">
           {(["inbox", "feed"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "flex-1 rounded-xl border border-glass-border py-2 text-sm tap active:tap-active",
-                tab === t && "bg-gradient-vyzun text-primary-foreground",
+                "flex-1 rounded-full py-2 text-xs font-semibold tap active:tap-active",
+                tab === t
+                  ? "bg-gradient-vyzun text-primary-foreground"
+                  : "text-muted-foreground",
               )}
             >
               {t === "inbox" ? "Anonymous Inbox" : "Vibe Feed"}
@@ -97,15 +101,37 @@ function SecretsPage() {
       <main className="mx-auto max-w-lg px-5">
         {tab === "inbox" && (
           <section className="space-y-3">
+            <div className="neon-frame p-4">
+              <p className="text-xs text-muted-foreground">Your anonymous link</p>
+              <div className="mt-2 flex items-center gap-2">
+                <p className="min-w-0 flex-1 truncate text-sm font-medium text-cyan">{link}</p>
+                <button
+                  aria-label="Copy anonymous link"
+                  onClick={() => navigator.clipboard?.writeText(`https://${link}`)}
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-glass-border tap active:tap-active"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <Link
+                to="/secrets/chat"
+                className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-glass-border py-2.5 text-sm font-semibold tap active:tap-active"
+              >
+                <Send className="h-4 w-4" /> Send a secret message
+              </Link>
+            </div>
+
             {state.secrets.length === 0 && (
               <p className="glass-card p-6 text-center text-sm text-muted-foreground">
-                No secrets yet. Share your anonymous link from Secret Chat.
+                No secrets yet. Share your anonymous link above.
               </p>
             )}
             {state.secrets.map((m) => (
               <article key={m.id} className="glass-card p-4">
                 <p className="text-sm">{m.body}</p>
-                <p className="mt-2 text-xs text-muted-foreground">Hint: {m.hint}</p>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Lightbulb className="h-3.5 w-3.5 text-cyan" /> {m.hint}
+                </p>
                 {m.reply && (
                   <p className="mt-3 rounded-xl border border-glass-border px-3 py-2 text-sm">
                     Your reply: {m.reply}

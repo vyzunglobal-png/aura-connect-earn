@@ -48,47 +48,48 @@
 :root {
   --radius: 1.1rem;
 
-  /* Dark Neon */
-  --background: oklch(0.16 0.045 275);
-  --foreground: oklch(0.97 0.01 280);
-  --card: oklch(0.21 0.05 277);
-  --card-foreground: oklch(0.97 0.01 280);
-  --popover: oklch(0.19 0.05 277);
-  --popover-foreground: oklch(0.97 0.01 280);
-  --primary: oklch(0.66 0.24 305);
+  /* Dark Neon — deep navy obsidian (#0B0D17) */
+  --background: oklch(0.152 0.026 274);
+  --foreground: oklch(0.98 0.008 280);
+  --card: oklch(0.19 0.028 274);
+  --card-foreground: oklch(0.98 0.008 280);
+  --popover: oklch(0.175 0.028 274);
+  --popover-foreground: oklch(0.98 0.008 280);
+  --primary: oklch(0.63 0.21 295);
   --primary-foreground: oklch(0.99 0.005 280);
-  --secondary: oklch(0.27 0.06 280);
-  --secondary-foreground: oklch(0.97 0.01 280);
-  --muted: oklch(0.26 0.05 280);
-  --muted-foreground: oklch(0.72 0.035 285);
-  --accent: oklch(0.72 0.17 205);
-  --accent-foreground: oklch(0.16 0.045 275);
+  --secondary: oklch(0.235 0.03 274);
+  --secondary-foreground: oklch(0.98 0.008 280);
+  --muted: oklch(0.225 0.028 274);
+  --muted-foreground: oklch(0.73 0.025 280);
+  --accent: oklch(0.86 0.16 195);
+  --accent-foreground: oklch(0.152 0.026 274);
   --destructive: oklch(0.62 0.24 20);
   --destructive-foreground: oklch(0.99 0.005 280);
-  --border: oklch(0.85 0.1 300 / 18%);
-  --input: oklch(0.85 0.1 300 / 22%);
-  --ring: oklch(0.7 0.2 305);
+  --border: oklch(0.86 0.16 195 / 16%);
+  --input: oklch(0.86 0.16 195 / 20%);
+  --ring: oklch(0.86 0.16 195);
 
-  --vz-cyan: oklch(0.79 0.16 203);
-  --vz-violet: oklch(0.58 0.26 292);
-  --vz-magenta: oklch(0.7 0.28 330);
+  /* #00F0FF / #8B5CF6 / #FF007A */
+  --vz-cyan: oklch(0.869 0.1607 195.05);
+  --vz-violet: oklch(0.6266 0.2178 303.37);
+  --vz-magenta: oklch(0.6244 0.2871 6.83);
 
-  --glass: oklch(0.99 0.01 280 / 6%);
-  --glass-border: oklch(0.9 0.08 300 / 20%);
+  --glass: oklch(0.99 0.01 280 / 4%);
+  --glass-border: oklch(0.869 0.1607 195.05 / 18%);
 
   --gradient-vyzun: linear-gradient(
     120deg,
     var(--vz-cyan) 0%,
-    var(--vz-violet) 52%,
-    var(--vz-magenta) 100%
+    var(--vz-magenta) 52%,
+    var(--vz-violet) 100%
   );
   --gradient-surface: linear-gradient(
     160deg,
-    oklch(0.99 0.01 280 / 10%),
-    oklch(0.99 0.01 280 / 2%)
+    oklch(0.99 0.01 280 / 7%),
+    oklch(0.99 0.01 280 / 1.5%)
   );
-  --glow-neon: 0 0 0 1px var(--glass-border), 0 18px 50px -18px oklch(0.58 0.26 292 / 55%);
-  --glow-cyan: 0 0 32px -6px oklch(0.79 0.16 203 / 55%);
+  --glow-neon: 0 0 0 1px var(--glass-border), 0 18px 50px -22px oklch(0.6266 0.2178 303.37 / 45%);
+  --glow-cyan: 0 0 32px -6px oklch(0.869 0.1607 195.05 / 45%);
 }
 
 .theme-light {
@@ -130,8 +131,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(60% 40% at 12% 0%, oklch(0.79 0.16 203 / 12%), transparent 70%),
-      radial-gradient(50% 40% at 92% 8%, oklch(0.7 0.28 330 / 12%), transparent 70%);
+      radial-gradient(55% 32% at 10% 0%, oklch(0.869 0.1607 195.05 / 7%), transparent 72%),
+      radial-gradient(45% 30% at 94% 6%, oklch(0.6244 0.2871 6.83 / 6%), transparent 72%);
     background-attachment: fixed;
   }
 
@@ -166,6 +167,31 @@
 
 @utility neon-ring {
   box-shadow: var(--glow-cyan);
+}
+
+/* Gradient neon border on a solid navy surface. */
+@utility neon-frame {
+  position: relative;
+  background-color: var(--color-background);
+  border-radius: var(--radius-2xl);
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background-image: var(--gradient-vyzun);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
 }
 
 @utility tap {

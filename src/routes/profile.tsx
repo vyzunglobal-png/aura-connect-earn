@@ -7,13 +7,12 @@ import {
   Crown,
   Globe,
   Lock,
+  Plus,
   QrCode,
   Settings,
-  Sparkles,
-  TrendingUp,
-  Wallet2,
 } from "lucide-react";
-import { useVyzun } from "@/lib/vyzun-store";
+import { useVyzun, type AuraCard } from "@/lib/vyzun-store";
+import { AuraCardModal, AuraCardView } from "@/components/vyzun/AuraCardView";
 import { CreatorDashboardSheet } from "@/components/vyzun/CreatorDashboardSheet";
 import { PrimeSheet } from "@/components/vyzun/PrimeSheet";
 import { SettingsSheet } from "@/components/vyzun/SettingsSheet";
@@ -39,16 +38,20 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
-  const { state } = useVyzun();
+  const { state, update } = useVyzun();
   const [tab, setTab] = useState<"reels" | "aura" | "scans">("reels");
   const [sheet, setSheet] = useState<null | "prime" | "creator" | "settings">(null);
+  const [openCard, setOpenCard] = useState<AuraCard | null>(null);
+  const [editing, setEditing] = useState(false);
   const p = state.profile;
+
+  const hearts = 1_400_000 + p.vibers * 12;
 
   return (
     <div className="pb-28">
       <header className="mx-auto max-w-lg px-5 pt-6">
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex items-start gap-4">
+          <div className="relative shrink-0">
             <span className="grid h-20 w-20 place-items-center rounded-full bg-gradient-vyzun text-2xl font-bold text-primary-foreground">
               {p.username[0]?.toUpperCase()}
             </span>
@@ -59,72 +62,116 @@ function ProfilePage() {
               <Camera className="h-4 w-4" />
             </button>
           </div>
-          <div className="min-w-0">
-            <h1 className="flex items-center gap-1.5 text-xl font-semibold">
-              {p.displayName}
-              {p.verified && <BadgeCheck className="h-5 w-5 text-cyan" />}
-            </h1>
-            <p className="text-sm text-muted-foreground">@{p.username}</p>
-            <p className="mt-1 text-sm">{p.bio}</p>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <h1 className="flex items-center gap-1.5 text-xl font-semibold">
+                  <span className="truncate">{p.displayName}</span>
+                  {p.verified && <BadgeCheck className="h-5 w-5 shrink-0 text-cyan" />}
+                </h1>
+                <p className="text-sm text-muted-foreground">@{p.username}</p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <button
+                  aria-label="Profile QR code"
+                  className="grid h-9 w-9 place-items-center rounded-xl border border-glass-border tap active:tap-active"
+                >
+                  <QrCode className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setSheet("settings")}
+                  aria-label="Settings"
+                  className="grid h-9 w-9 place-items-center rounded-xl border border-glass-border tap active:tap-active"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <p className="mt-1.5 text-sm">{p.bio}</p>
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+        <div className="mt-5 grid grid-cols-3 gap-2.5 text-center">
           {[
-            { label: "Vibers", value: p.vibers },
-            { label: "Vibing", value: p.vibing },
-            { label: "Aura Cards", value: state.auraCards.length },
+            { label: "Vibers", value: compact(p.vibers) },
+            { label: "Vibing With", value: compact(p.vibing) },
+            { label: "Hearts", value: compact(hearts) },
           ].map((s) => (
-            <div key={s.label} className="glass-card py-3">
-              <p className="font-display text-lg font-bold">{s.value}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
+            <div key={s.label} className="rounded-full border border-glass-border bg-card/60 py-2.5">
+              <p className="font-display text-base font-bold">{s.value}</p>
+              <p className="text-[11px] text-muted-foreground">{s.label}</p>
             </div>
           ))}
         </div>
 
-        <div className="mt-4 flex gap-2">
-          <button className="flex-1 rounded-xl border border-glass-border py-2.5 text-sm tap active:tap-active">
+        <div className="mt-4 flex gap-2.5">
+          <button
+            onClick={() => setEditing((e) => !e)}
+            className="flex-1 rounded-xl border border-glass-border py-2.5 text-sm font-semibold tap active:tap-active"
+          >
             Edit Profile
           </button>
-          <button
-            aria-label="Share QR"
-            className="grid w-11 place-items-center rounded-xl border border-glass-border tap active:tap-active"
-          >
-            <QrCode className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setSheet("settings")}
-            aria-label="Settings"
-            className="grid w-11 place-items-center rounded-xl border border-glass-border tap active:tap-active"
-          >
-            <Settings className="h-4 w-4" />
+          <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-vyzun py-2.5 text-sm font-bold text-primary-foreground tap active:tap-active">
+            <Plus className="h-4 w-4" /> Vibe With
           </button>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          <button
-            onClick={() => setSheet("prime")}
-            className="glass-card flex items-center gap-3 p-4 text-left tap active:tap-active"
-          >
-            <Crown className="h-5 w-5 text-magenta" />
-            <span>
-              <span className="block text-sm font-semibold">VYZUN Prime</span>
-              <span className="text-xs text-muted-foreground">
-                {p.prime ? "Active" : "Premium aura, themes & creator tools"}
-              </span>
+        {editing && (
+          <div className="anim-rise mt-3 space-y-2 rounded-2xl border border-glass-border p-4">
+            {(
+              [
+                ["displayName", "Display name"],
+                ["username", "Username"],
+                ["bio", "Bio"],
+              ] as const
+            ).map(([field, label]) => (
+              <label key={field} className="block text-xs text-muted-foreground">
+                {label}
+                <input
+                  value={p[field]}
+                  onChange={(e) =>
+                    update((s) => ({ profile: { ...s.profile, [field]: e.target.value } }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-glass-border bg-transparent px-3 py-2 text-sm text-foreground outline-none"
+                />
+              </label>
+            ))}
+            <button
+              onClick={() => setEditing(false)}
+              className="w-full rounded-xl bg-gradient-vyzun py-2.5 text-sm font-semibold text-primary-foreground tap active:tap-active"
+            >
+              Save
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={() => setSheet("prime")}
+          className="neon-frame mt-4 flex w-full items-center gap-3 p-4 text-left tap active:tap-active"
+        >
+          <span className="absolute inset-0 bg-gradient-vyzun opacity-15" aria-hidden />
+          <Crown className="relative h-5 w-5 text-magenta" />
+          <span className="relative">
+            <span className="block text-sm font-bold">Go VYZUN Premium</span>
+            <span className="text-xs text-muted-foreground">
+              {p.prime ? "Prime active" : "Premium aura, themes & creator tools"}
             </span>
-          </button>
-          <button
-            onClick={() => setSheet("creator")}
-            className="glass-card flex items-center gap-3 p-4 text-left tap active:tap-active"
-          >
-            <Wallet2 className="h-5 w-5 text-cyan" />
-            <span>
-              <span className="block text-sm font-semibold">Creator Dashboard &amp; Earnings</span>
-              <span className="text-xs text-muted-foreground">Real-money earnings, payouts & analytics</span>
+          </span>
+        </button>
+
+        <button
+          onClick={() => setSheet("creator")}
+          className="glass-card mt-3 flex w-full items-center gap-3 p-4 text-left tap active:tap-active"
+        >
+          <BarChart3 className="h-5 w-5 text-cyan" />
+          <span>
+            <span className="block text-sm font-semibold">Creator Dashboard &amp; Earnings</span>
+            <span className="text-xs text-muted-foreground">
+              Ad revenue, brand missions, affiliate & subscriptions in real currency
             </span>
-          </button>
-        </div>
+          </span>
+        </button>
       </header>
 
       <main className="mx-auto mt-6 max-w-lg px-5">
@@ -134,7 +181,7 @@ function ProfilePage() {
               key={t}
               onClick={() => setTab(t)}
               className={cn(
-                "flex-1 rounded-xl border border-glass-border py-2 text-sm capitalize tap active:tap-active",
+                "flex-1 rounded-xl border border-glass-border py-2 text-sm tap active:tap-active",
                 tab === t && "bg-gradient-vyzun text-primary-foreground",
               )}
             >
@@ -146,7 +193,7 @@ function ProfilePage() {
         {tab === "reels" && (
           <div className="mt-4 grid grid-cols-3 gap-2">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="aspect-[9/16] rounded-xl border border-glass-border bg-gradient-vyzun/10" />
+              <div key={i} className="aspect-[9/16] rounded-xl border border-glass-border" />
             ))}
             <p className="col-span-3 mt-2 text-center text-xs text-muted-foreground">
               Upload your first original Reel to start building Vibers.
@@ -155,23 +202,25 @@ function ProfilePage() {
         )}
 
         {tab === "aura" && (
-          <div className="mt-4 space-y-2">
-            {state.auraCards.length === 0 && (
+          <div className="mt-4">
+            {state.auraCards.length === 0 ? (
               <p className="glass-card p-6 text-center text-sm text-muted-foreground">
                 No Aura Cards yet — run a scan.
               </p>
-            )}
-            {state.auraCards.map((c) => (
-              <div key={c.id} className="glass-card flex items-center gap-3 p-4">
-                <Sparkles className="h-5 w-5 text-magenta" />
-                <div>
-                  <p className="text-sm font-medium">{c.headline}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {c.rarity} · score {c.score} · top {c.percentile}%
-                  </p>
-                </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {state.auraCards.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setOpenCard(c)}
+                    aria-label={`Open Aura Card ${c.headline}`}
+                    className="text-left tap active:tap-active"
+                  >
+                    <AuraCardView card={c} username={p.username} prime={p.prime} compact />
+                  </button>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -202,14 +251,26 @@ function ProfilePage() {
             <Lock className="mx-auto mb-1 h-4 w-4" /> Privacy
           </div>
         </div>
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
-          <TrendingUp className="h-3.5 w-3.5" /> Verification and Prime are separate on VYZUN.
+        <p className="mt-4 text-center text-[11px] text-muted-foreground">
+          VYZUN Verified and VYZUN Premium are separate.
         </p>
       </main>
 
+      <AuraCardModal
+        card={openCard}
+        username={p.username}
+        prime={p.prime}
+        onClose={() => setOpenCard(null)}
+      />
       <PrimeSheet open={sheet === "prime"} onClose={() => setSheet(null)} />
       <CreatorDashboardSheet open={sheet === "creator"} onClose={() => setSheet(null)} />
       <SettingsSheet open={sheet === "settings"} onClose={() => setSheet(null)} />
     </div>
   );
+}
+
+function compact(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return `${n}`;
 }
