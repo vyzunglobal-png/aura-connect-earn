@@ -7,13 +7,12 @@ import {
   Crown,
   Globe,
   Lock,
+  Plus,
   QrCode,
   Settings,
-  Sparkles,
-  TrendingUp,
-  Wallet2,
 } from "lucide-react";
-import { useVyzun } from "@/lib/vyzun-store";
+import { useVyzun, type AuraCard } from "@/lib/vyzun-store";
+import { AuraCardModal, AuraCardView } from "@/components/vyzun/AuraCardView";
 import { CreatorDashboardSheet } from "@/components/vyzun/CreatorDashboardSheet";
 import { PrimeSheet } from "@/components/vyzun/PrimeSheet";
 import { SettingsSheet } from "@/components/vyzun/SettingsSheet";
