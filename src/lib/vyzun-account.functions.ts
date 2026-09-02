@@ -79,12 +79,22 @@ export const savePreferences = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    type PrefPatch = Parameters<
-      ReturnType<typeof context.supabase.from<"user_preferences">>["update"]
-    >[0];
-    const patch = Object.fromEntries(
-      Object.entries(data).filter(([, v]) => v !== undefined),
-    ) as PrefPatch;
+    const patch = {
+      ...(data.theme !== undefined ? { theme: data.theme } : {}),
+      ...(data.app_language !== undefined ? { app_language: data.app_language } : {}),
+      ...(data.reduced_motion !== undefined ? { reduced_motion: data.reduced_motion } : {}),
+      ...(data.data_saver !== undefined ? { data_saver: data.data_saver } : {}),
+      ...(data.reel_autoplay !== undefined ? { reel_autoplay: data.reel_autoplay } : {}),
+      ...(data.video_quality !== undefined ? { video_quality: data.video_quality } : {}),
+      ...(data.who_can_message !== undefined ? { who_can_message: data.who_can_message } : {}),
+      ...(data.who_can_call !== undefined ? { who_can_call: data.who_can_call } : {}),
+      ...(data.who_can_send_secrets !== undefined
+        ? { who_can_send_secrets: data.who_can_send_secrets }
+        : {}),
+      ...(data.searchable !== undefined ? { searchable: data.searchable } : {}),
+      ...(data.read_receipts !== undefined ? { read_receipts: data.read_receipts } : {}),
+      ...(data.push_enabled !== undefined ? { push_enabled: data.push_enabled } : {}),
+    };
     if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await context.supabase
       .from("user_preferences")
