@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import { Check, Globe, Moon, Search, Shield, Smartphone, Sun, User } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { LANGUAGES, useVyzun, type ThemeName } from "@/lib/vyzun-store";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
+import { claimProfile } from "@/lib/vyzun-account.functions";
 import { Logo, Wordmark } from "./Logo";
 import { cn } from "@/lib/utils";
 
@@ -8,9 +12,15 @@ type Step = "theme" | "language" | "auth" | "profile";
 
 export function Onboarding() {
   const { state, update } = useVyzun();
+  const claim = useServerFn(claimProfile);
   const [step, setStep] = useState<Step>("theme");
   const [query, setQuery] = useState("");
   const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const langs = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -27,8 +37,77 @@ export function Onboarding() {
     setStep("profile");
   }
 
-  function saveProfile() {
+  async function signInWithGoogle() {
+    setBusy(true);
+    setAuthError(null);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        setAuthError("Google sign-in didn't complete. Please try again.");
+        return;
+      }
+      if (result.redirected) return;
+      finish("google");
+    } catch {
+      setAuthError("Google sign-in is unavailable right now.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendOtp() {
+    setBusy(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithOtp({ phone: phone.replace(/[^\d+]/g, "") });
+    setBusy(false);
+    if (error) {
+      setAuthError(error.message);
+      return;
+    }
+    setOtpSent(true);
+  }
+
+  async function verifyOtp() {
+    setBusy(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.verifyOtp({
+      phone: phone.replace(/[^\d+]/g, ""),
+      token: code,
+      type: "sms",
+    });
+    setBusy(false);
+    if (error) {
+      setAuthError(error.message);
+      return;
+    }
+    finish("phone");
+  }
+
+  async function saveProfile() {
     const handle = (username || "vyzuner").replace(/[^a-z0-9_.]/gi, "").toLowerCase() || "vyzuner";
+    const { data } = await supabase.auth.getSession();
+
+    if (data.session) {
+      setBusy(true);
+      const res = await claim({
+        data: {
+          username: handle,
+          displayName: handle,
+          language: state.language,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+      });
+      setBusy(false);
+      if (!res.ok) {
+        setAuthError(
+          res.error === "username_taken" ? "That username is taken." : "Couldn't save your profile.",
+        );
+        return;
+      }
+    }
+
     update((s) => ({
       onboarded: true,
       profile: { ...s.profile, username: handle, displayName: handle },
