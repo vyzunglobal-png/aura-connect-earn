@@ -79,9 +79,12 @@ export const savePreferences = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    type PrefPatch = Parameters<
+      ReturnType<typeof context.supabase.from<"user_preferences">>["update"]
+    >[0];
     const patch = Object.fromEntries(
       Object.entries(data).filter(([, v]) => v !== undefined),
-    ) as Record<string, string | boolean>;
+    ) as PrefPatch;
     if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await context.supabase
       .from("user_preferences")
