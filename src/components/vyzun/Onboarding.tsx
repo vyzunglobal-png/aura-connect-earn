@@ -116,31 +116,84 @@ export function Onboarding() {
             </p>
             <div className="mt-6 space-y-3">
               <button
-                onClick={() => finish("google")}
-                className="glass-card flex w-full items-center gap-3 px-5 py-4 text-left tap active:tap-active"
+                onClick={signInWithGoogle}
+                disabled={busy}
+                className="glass-card flex w-full items-center gap-3 px-5 py-4 text-left tap active:tap-active disabled:opacity-60"
               >
                 <Shield className="h-5 w-5 text-cyan" />
                 <span>
                   <span className="block font-medium">Continue with Google</span>
-                  <span className="text-xs text-muted-foreground">Needs Cloud auth configuration</span>
+                  <span className="text-xs text-muted-foreground">Secure sign-in</span>
                 </span>
               </button>
-              <button
-                onClick={() => finish("phone")}
-                className="glass-card flex w-full items-center gap-3 px-5 py-4 text-left tap active:tap-active"
-              >
-                <Smartphone className="h-5 w-5 text-violet" />
-                <span>
-                  <span className="block font-medium">Continue with Phone / OTP</span>
-                  <span className="text-xs text-muted-foreground">Needs Cloud auth configuration</span>
-                </span>
-              </button>
+
+              {otpSent ? (
+                <div className="glass-card space-y-3 px-5 py-4">
+                  <p className="text-sm font-medium">Enter the 6-digit code sent to {phone}</p>
+                  <input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    inputMode="numeric"
+                    placeholder="123456"
+                    aria-label="One-time code"
+                    className="w-full rounded-xl border border-glass-border bg-transparent px-3 py-2 text-sm outline-none tracking-[0.4em] placeholder:text-muted-foreground"
+                  />
+                  <button
+                    onClick={verifyOtp}
+                    disabled={busy || code.length < 6}
+                    className="w-full rounded-xl bg-gradient-vyzun py-2.5 font-semibold text-primary-foreground tap active:tap-active disabled:opacity-60"
+                  >
+                    Verify code
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOtpSent(false);
+                      setCode("");
+                    }}
+                    className="w-full text-xs text-muted-foreground"
+                  >
+                    Use a different number
+                  </button>
+                </div>
+              ) : (
+                <div className="glass-card space-y-3 px-5 py-4">
+                  <span className="flex items-center gap-3 text-sm font-medium">
+                    <Smartphone className="h-5 w-5 text-violet" /> Continue with Phone / OTP
+                  </span>
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    inputMode="tel"
+                    placeholder="+91 98765 43210"
+                    aria-label="Phone number in international format"
+                    className="w-full rounded-xl border border-glass-border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                  <button
+                    onClick={sendOtp}
+                    disabled={busy || phone.trim().length < 8}
+                    className="w-full rounded-xl border border-glass-border py-2.5 text-sm font-semibold tap active:tap-active disabled:opacity-60"
+                  >
+                    Send code
+                  </button>
+                </div>
+              )}
+
+              {authError && (
+                <p role="alert" className="text-xs text-destructive">
+                  {authError}
+                </p>
+              )}
+
               <button
                 onClick={() => finish("guest")}
                 className="w-full rounded-xl bg-gradient-vyzun py-3 font-semibold text-primary-foreground tap active:tap-active"
               >
                 Continue as Guest
               </button>
+              <p className="text-center text-[11px] text-muted-foreground">
+                Guest mode keeps your scans, Aura Cards and preferences on this device and syncs
+                supported data once you sign in.
+              </p>
             </div>
           </section>
         )}
