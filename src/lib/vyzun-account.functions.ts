@@ -79,9 +79,13 @@ export const savePreferences = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, v]) => v !== undefined),
+    ) as Record<string, string | boolean>;
+    if (Object.keys(patch).length === 0) return { ok: true };
     const { error } = await context.supabase
       .from("user_preferences")
-      .update(data)
+      .update(patch)
       .eq("user_id", context.userId);
     return { ok: !error };
   });
