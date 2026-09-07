@@ -224,10 +224,23 @@ export function VyzunProvider({ children }: { children: ReactNode }) {
     let next = { ...defaultState(), hydrated: true };
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) next = { ...next, ...(JSON.parse(raw) as VyzunState), hydrated: true };
+      if (raw) {
+        const saved = JSON.parse(raw) as Partial<VyzunState>;
+        next = {
+          ...next,
+          ...saved,
+          settings: {
+            ...defaultSettings(),
+            ...(saved.settings ?? {}),
+            push: { ...defaultSettings().push, ...(saved.settings?.push ?? {}) },
+          },
+          hydrated: true,
+        };
+      }
     } catch {
       /* ignore corrupt local state */
     }
+
     setState(next);
   }, []);
 
