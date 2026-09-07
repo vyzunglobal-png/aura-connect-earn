@@ -68,12 +68,41 @@ export type Profile = {
   authMode: "guest" | "google" | "phone" | null;
 };
 
+export type Audience = "everyone" | "vibers" | "nobody";
+
+export type VyzunSettings = {
+  whoCanSendSecrets: Audience;
+  whoCanMessage: Audience;
+  whoCanCall: Audience;
+  crushMatcher: boolean;
+  searchable: boolean;
+  readReceipts: boolean;
+  reelAutoplayCellular: boolean;
+  dataSaver: boolean;
+  videoQuality: "auto" | "low" | "medium" | "high";
+  haptics: boolean;
+  uiSounds: boolean;
+  reducedMotion: boolean;
+  push: {
+    vibes: boolean;
+    secrets: boolean;
+    secretReplies: boolean;
+    directMessages: boolean;
+    calls: boolean;
+    brandInvitations: boolean;
+    creatorEarnings: boolean;
+  };
+  blocked: string[];
+  muted: string[];
+};
+
 export type VyzunState = {
   hydrated: boolean;
   onboarded: boolean;
   theme: ThemeName;
   language: string;
   profile: Profile;
+  settings: VyzunSettings;
   auraCards: AuraCard[];
   scans: { id: string; mode: string; createdAt: number }[];
   secrets: SecretMessage[];
@@ -82,7 +111,10 @@ export type VyzunState = {
   crush: string | null;
 };
 
+export const APP_VERSION = "1.0.0";
+
 const KEY = "vyzun.state.v1";
+
 
 const seedSecrets: SecretMessage[] = [
   {
