@@ -169,7 +169,9 @@ function defaultState(): VyzunState {
       vibing: 0,
       authMode: null,
     },
+    settings: defaultSettings(),
     auraCards: [],
+
     scans: [],
     secrets: seedSecrets,
     feed: seedFeed,
