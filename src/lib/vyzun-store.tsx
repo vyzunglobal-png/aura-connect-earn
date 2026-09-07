@@ -152,7 +152,36 @@ const seedFeed: VibePost[] = [
   },
 ];
 
+export function defaultSettings(): VyzunSettings {
+  return {
+    whoCanSendSecrets: "everyone",
+    whoCanMessage: "everyone",
+    whoCanCall: "vibers",
+    crushMatcher: true,
+    searchable: true,
+    readReceipts: true,
+    reelAutoplayCellular: false,
+    dataSaver: false,
+    videoQuality: "auto",
+    haptics: true,
+    uiSounds: true,
+    reducedMotion: false,
+    push: {
+      vibes: true,
+      secrets: true,
+      secretReplies: true,
+      directMessages: true,
+      calls: true,
+      brandInvitations: true,
+      creatorEarnings: true,
+    },
+    blocked: [],
+    muted: [],
+  };
+}
+
 function defaultState(): VyzunState {
+
   return {
     hydrated: false,
     onboarded: false,
