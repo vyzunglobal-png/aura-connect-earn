@@ -42,6 +42,7 @@ export type VibePost = {
   author: string;
   anonymous: boolean;
   body: string;
+  image?: string | null;
   createdAt: number;
   reactions: Record<ReactionKey, number>;
   mine?: ReactionKey | null;
