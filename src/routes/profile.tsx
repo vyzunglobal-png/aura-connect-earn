@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
   validateSearch: (search: Record<string, unknown>) => ({
-    u: typeof search.u === "string" && search.u.trim() ? search.u.trim().slice(0, 30) : undefined,
+    u: typeof search['u'] === "string" && search['u'].trim() ? String(search['u']).trim().slice(0, 30) : undefined,
   }),
   head: () => ({
     meta: [
