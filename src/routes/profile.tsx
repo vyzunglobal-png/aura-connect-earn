@@ -209,7 +209,13 @@ function ProfilePage() {
 
       <PrimeSheet open={sheet === "prime"} onClose={() => setSheet(null)} />
       <CreatorDashboardSheet open={sheet === "creator"} onClose={() => setSheet(null)} />
-      <SettingsSheet open={sheet === "settings"} onClose={() => setSheet(null)} />
+      <SettingsSheet
+        open={sheet === "settings"}
+        onClose={() => setSheet(null)}
+        onOpenPrime={() => setSheet("prime")}
+        onOpenCreator={() => setSheet("creator")}
+      />
+
     </div>
   );
 }

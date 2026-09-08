@@ -234,9 +234,9 @@ export function SettingsSheet({ open, onClose, onOpenPrime, onOpenCreator }: Pro
     update((prev) => ({ settings: { ...prev.settings, push: { ...prev.settings.push, ...patch } } }));
 
   /** Local-first; mirrored to the account when signed in. */
-  const syncPrefs = (data: Parameters<typeof savePreferences>[0] extends never ? never : Record<string, unknown>) => {
+  const syncPrefs = (data: Record<string, unknown>) => {
     if (!isAuthenticated) return;
-    void savePreferences({ data } as never).catch(() => undefined);
+    void Promise.resolve(savePreferences({ data } as never)).catch(() => undefined);
   };
 
   const langs = useMemo(() => {
