@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   BadgeCheck,
@@ -7,6 +7,7 @@ import {
   Crown,
   Globe,
   Lock,
+  MessageCircle,
   QrCode,
   Settings,
   Sparkles,
@@ -17,6 +18,7 @@ import { useVyzun } from "@/lib/vyzun-store";
 import { CreatorDashboardSheet } from "@/components/vyzun/CreatorDashboardSheet";
 import { PrimeSheet } from "@/components/vyzun/PrimeSheet";
 import { SettingsSheet } from "@/components/vyzun/SettingsSheet";
+import { VibeWithButton } from "@/components/vyzun/VibeWithButton";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
