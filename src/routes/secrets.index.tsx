@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Flag, Ghost, MessageCircle, Phone, Send, Trash2, Video } from "lucide-react";
+import { useRef, useState } from "react";
+import { Flag, Ghost, ImagePlus, MessageCircle, Phone, Send, Trash2, Video, X } from "lucide-react";
 import { REACTIONS, useVyzun, type ReactionKey } from "@/lib/vyzun-store";
 import { cn } from "@/lib/utils";
 import { DirectChatsSheet } from "@/components/vyzun/DirectChatsSheet";
