@@ -22,6 +22,9 @@ import { VibeWithButton } from "@/components/vyzun/VibeWithButton";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    u: typeof search.u === "string" && search.u.trim() ? search.u.trim().slice(0, 30) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Your VYZUN Profile — Vibers, Reels & Creator Tools" },
@@ -42,40 +45,51 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const { state } = useVyzun();
+  const { u } = Route.useSearch();
   const [tab, setTab] = useState<"reels" | "aura" | "scans">("reels");
   const [sheet, setSheet] = useState<null | "prime" | "creator" | "settings">(null);
   const p = state.profile;
+  const isSelf = !u || u.toLowerCase() === p.username.toLowerCase();
+  const viewedName = isSelf ? p.displayName : `@${u}`;
+  const viewedHandle = isSelf ? p.username : u!;
 
   return (
     <div className="pb-28">
       <header className="mx-auto max-w-lg px-5 pt-6">
-        <div className="flex items-center gap-4">
+        {!isSelf && (
+          <Link to="/profile" search={{ u: undefined }} className="text-xs text-muted-foreground tap active:tap-active">
+            ← Back to your profile
+          </Link>
+        )}
+        <div className="mt-2 flex items-center gap-4">
           <div className="relative">
             <span className="grid h-20 w-20 place-items-center rounded-full bg-gradient-vyzun text-2xl font-bold text-primary-foreground">
-              {p.username[0]?.toUpperCase()}
+              {viewedHandle[0]?.toUpperCase()}
             </span>
-            <button
-              aria-label="Change photo"
-              className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border border-glass-border bg-background tap active:tap-active"
-            >
-              <Camera className="h-4 w-4" />
-            </button>
+            {isSelf && (
+              <button
+                aria-label="Change photo"
+                className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border border-glass-border bg-background tap active:tap-active"
+              >
+                <Camera className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <div className="min-w-0">
-            <h1 className="flex items-center gap-1.5 text-xl font-semibold">
-              {p.displayName}
-              {p.verified && <BadgeCheck className="h-5 w-5 text-cyan" />}
+            <h1 className="flex items-center gap-1.5 truncate text-xl font-semibold">
+              {viewedName}
+              {isSelf && p.verified && <BadgeCheck className="h-5 w-5 shrink-0 text-cyan" />}
             </h1>
-            <p className="text-sm text-muted-foreground">@{p.username}</p>
-            <p className="mt-1 text-sm">{p.bio}</p>
+            <p className="text-sm text-muted-foreground">@{viewedHandle}</p>
+            {isSelf && <p className="mt-1 text-sm">{p.bio}</p>}
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-3 text-center">
           {[
-            { label: "Vibers", value: p.vibers },
-            { label: "Vibing", value: p.vibing },
-            { label: "Aura Cards", value: state.auraCards.length },
+            { label: "Vibers", value: isSelf ? p.vibers : "—" },
+            { label: "Vibing", value: isSelf ? p.vibing : "—" },
+            { label: "Aura Cards", value: isSelf ? state.auraCards.length : "—" },
           ].map((s) => (
             <div key={s.label} className="glass-card py-3">
               <p className="font-display text-lg font-bold">{s.value}</p>
@@ -85,23 +99,36 @@ function ProfilePage() {
         </div>
 
         <div className="mt-4 flex gap-2">
-          <button className="flex-1 rounded-xl border border-glass-border py-2.5 text-sm tap active:tap-active">
-            Edit Profile
-          </button>
+          {isSelf ? (
+            <button className="flex-1 rounded-xl border border-glass-border py-2.5 text-sm tap active:tap-active">
+              Edit Profile
+            </button>
+          ) : (
+            <>
+              <VibeWithButton username={viewedHandle} />
+              <button className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border border-glass-border py-2.5 text-sm tap active:tap-active">
+                <MessageCircle className="h-4 w-4 shrink-0" />
+                <span className="truncate">Message</span>
+              </button>
+            </>
+          )}
           <button
             aria-label="Share QR"
-            className="grid w-11 place-items-center rounded-xl border border-glass-border tap active:tap-active"
+            className="grid w-11 shrink-0 place-items-center rounded-xl border border-glass-border tap active:tap-active"
           >
             <QrCode className="h-4 w-4" />
           </button>
-          <button
-            onClick={() => setSheet("settings")}
-            aria-label="Settings"
-            className="grid w-11 place-items-center rounded-xl border border-glass-border tap active:tap-active"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
+          {isSelf && (
+            <button
+              onClick={() => setSheet("settings")}
+              aria-label="Settings"
+              className="grid w-11 shrink-0 place-items-center rounded-xl border border-glass-border tap active:tap-active"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          )}
         </div>
+
 
         <div className="mt-4 grid gap-3">
           <button
