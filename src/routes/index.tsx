@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, Heart, ImageUp, RefreshCcw, Share2, Sparkles, Wand2 } from "lucide-react";
+import {
+  Camera,
+  Download,
+  Heart,
+  ImageUp,
+  RefreshCcw,
+  Send,
+  Share2,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { AppHeader } from "@/components/vyzun/AppHeader";
 import { AuraCardView } from "@/components/vyzun/AuraCardView";
 import { CrushMatcher } from "@/components/vyzun/CrushMatcher";
 import { useVyzun, type AuraCard } from "@/lib/vyzun-store";
+import { downloadDataUrl, renderNodeToPng, shareImage } from "@/lib/aura-share";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
@@ -34,7 +45,7 @@ const MODES = [
 
 const RARITIES = ["Common", "Rare", "Epic", "Legendary", "Mythic"];
 
-function generateAura(mode: AuraCard["mode"]): AuraCard {
+function generateAura(mode: AuraCard["mode"], photo?: string | null): AuraCard {
   const score = 40 + Math.floor(Math.random() * 60);
   const rarity = RARITIES[Math.min(RARITIES.length - 1, Math.floor(score / 21))];
   const copy: Record<AuraCard["mode"], { headline: string; lines: string[] }> = {
@@ -70,8 +81,50 @@ function generateAura(mode: AuraCard["mode"]): AuraCard {
     rarity: rarity ?? "Rare",
     percentile: Math.max(1, 100 - score),
     createdAt: Date.now(),
+    photo: photo ?? null,
     ...copy[mode],
   };
+}
+
+function readFile(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read-failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Grab a single still frame from the front camera as a data URL. */
+async function captureSelfie() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+  try {
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise((r) => window.setTimeout(r, 350));
+    const size = Math.min(video.videoWidth, video.videoHeight) || 480;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(
+      video,
+      (video.videoWidth - size) / 2,
+      (video.videoHeight - size) / 2,
+      size,
+      size,
+      0,
+      0,
+      size,
+      size,
+    );
+    return canvas.toDataURL("image/jpeg", 0.9);
+  } finally {
+    stream.getTracks().forEach((t) => t.stop());
+  }
 }
 
 function ScanPage() {
@@ -80,23 +133,29 @@ function ScanPage() {
   const [scanning, setScanning] = useState(false);
   const [card, setCard] = useState<AuraCard | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [busy, setBusy] = useState<null | "share" | "download" | "post">(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
 
   async function requestCamera() {
     setCameraError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      stream.getTracks().forEach((t) => t.stop());
-      runScan();
+      const shot = await captureSelfie();
+      setPhoto(shot);
+      runScan(shot);
     } catch {
       setCameraError("Camera unavailable. You can upload a photo from your gallery instead.");
     }
   }
 
-  function runScan() {
+  function runScan(nextPhoto?: string | null) {
+    const usePhoto = nextPhoto === undefined ? photo : nextPhoto;
     setScanning(true);
+    setNotice(null);
     window.setTimeout(() => {
-      const next = generateAura(mode);
+      const next = generateAura(mode, usePhoto);
       setCard(next);
       setScanning(false);
       update((s) => ({
@@ -104,6 +163,74 @@ function ScanPage() {
         scans: [{ id: next.id, mode, createdAt: next.createdAt }, ...s.scans].slice(0, 50),
       }));
     }, 1400);
+  }
+
+  async function exportCard() {
+    if (!cardRef.current) return null;
+    return renderNodeToPng(cardRef.current);
+  }
+
+  async function onShare() {
+    if (!card) return;
+    setBusy("share");
+    try {
+      const out = await exportCard();
+      if (!out) return;
+      const result = await shareImage(
+        out.blob,
+        out.dataUrl,
+        `My VYZUN aura is ${card.score} (${card.rarity}). Beat my Aura → VYZUN`,
+      );
+      if (result === "downloaded") setNotice("Sharing isn’t available here — the image was saved instead.");
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onDownload() {
+    setBusy("download");
+    try {
+      const out = await exportCard();
+      if (out) {
+        downloadDataUrl(out.dataUrl, "vyzun-aura.png");
+        setNotice("Aura Card image saved.");
+      }
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onPostToFeed() {
+    if (!card) return;
+    setBusy("post");
+    try {
+      const out = await exportCard();
+      if (!out) return;
+      update((s) => ({
+        feed: [
+          {
+            id: crypto.randomUUID(),
+            author: s.profile.username,
+            anonymous: false,
+            body: `My aura reads ${card.score} — ${card.headline}. Beat my Aura → VYZUN`,
+            image: out.dataUrl,
+            createdAt: Date.now(),
+            reactions: { vibe: 0, curious: 0, savage: 0, lol: 0 },
+            mine: null,
+          },
+          ...s.feed,
+        ],
+      }));
+      setNotice("Posted to your Vibe Feed.");
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
