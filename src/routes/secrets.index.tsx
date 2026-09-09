@@ -32,6 +32,9 @@ function SecretsPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [chatsOpen, setChatsOpen] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function react(id: string, key: ReactionKey) {
     update((s) => ({
@@ -46,9 +49,26 @@ function SecretsPage() {
     }));
   }
 
+  function pickImage(file: File | undefined) {
+    setMediaError(null);
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setMediaError("Please choose a photo.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setMediaError("Photo is larger than 4 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImage(typeof reader.result === "string" ? reader.result : null);
+    reader.onerror = () => setMediaError("Could not read that photo.");
+    reader.readAsDataURL(file);
+  }
+
   function post() {
     const body = draft.trim();
-    if (!body) return;
+    if (!body && !image) return;
     update((s) => ({
       feed: [
         {
@@ -56,6 +76,7 @@ function SecretsPage() {
           author: anon ? "anon" : s.profile.username,
           anonymous: anon,
           body,
+          image,
           createdAt: Date.now(),
           reactions: { vibe: 0, curious: 0, savage: 0, lol: 0 },
           mine: null,
@@ -64,7 +85,11 @@ function SecretsPage() {
       ],
     }));
     setDraft("");
+    setImage(null);
+    setMediaError(null);
+    if (fileRef.current) fileRef.current.value = "";
   }
+
 
   return (
     <div className="pb-36">
