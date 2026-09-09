@@ -266,7 +266,15 @@ function SecretsPage() {
                   <p className="text-xs text-muted-foreground">
                     {p.anonymous ? "Anonymous" : `@${p.author}`}
                   </p>
-                  <p className="mt-1.5 text-sm">{p.body}</p>
+                  {p.body && <p className="mt-1.5 text-sm">{p.body}</p>}
+                  {p.image && (
+                    <img
+                      src={p.image}
+                      alt="Vibe Feed attachment"
+                      loading="lazy"
+                      className="mt-3 max-h-80 w-full rounded-xl border border-glass-border object-cover"
+                    />
+                  )}
                   <div className="mt-3 flex gap-2">
                     {REACTIONS.map((r) => (
                       <button
