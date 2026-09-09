@@ -45,7 +45,7 @@ const MODES = [
 
 const RARITIES = ["Common", "Rare", "Epic", "Legendary", "Mythic"];
 
-function generateAura(mode: AuraCard["mode"]): AuraCard {
+function generateAura(mode: AuraCard["mode"], photo?: string | null): AuraCard {
   const score = 40 + Math.floor(Math.random() * 60);
   const rarity = RARITIES[Math.min(RARITIES.length - 1, Math.floor(score / 21))];
   const copy: Record<AuraCard["mode"], { headline: string; lines: string[] }> = {
@@ -81,8 +81,50 @@ function generateAura(mode: AuraCard["mode"]): AuraCard {
     rarity: rarity ?? "Rare",
     percentile: Math.max(1, 100 - score),
     createdAt: Date.now(),
+    photo: photo ?? null,
     ...copy[mode],
   };
+}
+
+function readFile(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("read-failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Grab a single still frame from the front camera as a data URL. */
+async function captureSelfie() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+  try {
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise((r) => window.setTimeout(r, 350));
+    const size = Math.min(video.videoWidth, video.videoHeight) || 480;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(
+      video,
+      (video.videoWidth - size) / 2,
+      (video.videoHeight - size) / 2,
+      size,
+      size,
+      0,
+      0,
+      size,
+      size,
+    );
+    return canvas.toDataURL("image/jpeg", 0.9);
+  } finally {
+    stream.getTracks().forEach((t) => t.stop());
+  }
 }
 
 function ScanPage() {
