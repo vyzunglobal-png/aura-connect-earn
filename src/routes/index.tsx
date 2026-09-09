@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { Camera, Heart, ImageUp, RefreshCcw, Share2, Sparkles, Wand2 } from "lucide-react";
+import {
+  Camera,
+  Download,
+  Heart,
+  ImageUp,
+  RefreshCcw,
+  Send,
+  Share2,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
 import { AppHeader } from "@/components/vyzun/AppHeader";
 import { AuraCardView } from "@/components/vyzun/AuraCardView";
 import { CrushMatcher } from "@/components/vyzun/CrushMatcher";
 import { useVyzun, type AuraCard } from "@/lib/vyzun-store";
+import { downloadDataUrl, renderNodeToPng, shareImage } from "@/lib/aura-share";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
