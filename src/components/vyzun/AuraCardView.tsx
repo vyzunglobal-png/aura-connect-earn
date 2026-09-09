@@ -16,7 +16,7 @@ export const AuraCardView = forwardRef<
   HTMLElement,
   { card: AuraCard; username: string; prime?: boolean; className?: string }
 >(function AuraCardView({ card, username, prime, className }, ref) {
-  const ring = RARITY_RING[card.rarity] ?? RARITY_RING.Epic;
+  const ring = RARITY_RING[card.rarity] ?? RARITY_RING["Epic"]!;
 
   return (
     <article

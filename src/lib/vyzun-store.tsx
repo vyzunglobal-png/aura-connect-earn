@@ -25,6 +25,7 @@ export type AuraCard = {
   percentile: number;
   headline: string;
   lines: string[];
+  photo?: string | null;
   createdAt: number;
 };
 
