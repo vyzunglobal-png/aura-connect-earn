@@ -133,23 +133,29 @@ function ScanPage() {
   const [scanning, setScanning] = useState(false);
   const [card, setCard] = useState<AuraCard | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [busy, setBusy] = useState<null | "share" | "download" | "post">(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLElement>(null);
 
   async function requestCamera() {
     setCameraError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      stream.getTracks().forEach((t) => t.stop());
-      runScan();
+      const shot = await captureSelfie();
+      setPhoto(shot);
+      runScan(shot);
     } catch {
       setCameraError("Camera unavailable. You can upload a photo from your gallery instead.");
     }
   }
 
-  function runScan() {
+  function runScan(nextPhoto?: string | null) {
+    const usePhoto = nextPhoto === undefined ? photo : nextPhoto;
     setScanning(true);
+    setNotice(null);
     window.setTimeout(() => {
-      const next = generateAura(mode);
+      const next = generateAura(mode, usePhoto);
       setCard(next);
       setScanning(false);
       update((s) => ({
@@ -157,6 +163,74 @@ function ScanPage() {
         scans: [{ id: next.id, mode, createdAt: next.createdAt }, ...s.scans].slice(0, 50),
       }));
     }, 1400);
+  }
+
+  async function exportCard() {
+    if (!cardRef.current) return null;
+    return renderNodeToPng(cardRef.current);
+  }
+
+  async function onShare() {
+    if (!card) return;
+    setBusy("share");
+    try {
+      const out = await exportCard();
+      if (!out) return;
+      const result = await shareImage(
+        out.blob,
+        out.dataUrl,
+        `My VYZUN aura is ${card.score} (${card.rarity}). Beat my Aura → VYZUN`,
+      );
+      if (result === "downloaded") setNotice("Sharing isn’t available here — the image was saved instead.");
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onDownload() {
+    setBusy("download");
+    try {
+      const out = await exportCard();
+      if (out) {
+        downloadDataUrl(out.dataUrl, "vyzun-aura.png");
+        setNotice("Aura Card image saved.");
+      }
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function onPostToFeed() {
+    if (!card) return;
+    setBusy("post");
+    try {
+      const out = await exportCard();
+      if (!out) return;
+      update((s) => ({
+        feed: [
+          {
+            id: crypto.randomUUID(),
+            author: s.profile.username,
+            anonymous: false,
+            body: `My aura reads ${card.score} — ${card.headline}. Beat my Aura → VYZUN`,
+            image: out.dataUrl,
+            createdAt: Date.now(),
+            reactions: { vibe: 0, curious: 0, savage: 0, lol: 0 },
+            mine: null,
+          },
+          ...s.feed,
+        ],
+      }));
+      setNotice("Posted to your Vibe Feed.");
+    } catch {
+      setNotice("Couldn’t create the image. Please try again.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   return (
