@@ -50,7 +50,7 @@ function ProfilePage() {
   const [sheet, setSheet] = useState<null | "prime" | "creator" | "settings">(null);
   const p = state.profile;
   const isSelf = !u || u.toLowerCase() === p.username.toLowerCase();
-  const viewedName = isSelf ? p.displayName : `@${u}`;
+  const viewedName = isSelf ? p.displayName : u!;
   const viewedHandle = isSelf ? p.username : u!;
 
   return (

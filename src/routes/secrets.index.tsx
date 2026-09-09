@@ -32,6 +32,9 @@ function SecretsPage() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [reply, setReply] = useState("");
   const [chatsOpen, setChatsOpen] = useState(false);
+  const [image, setImage] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function react(id: string, key: ReactionKey) {
     update((s) => ({
@@ -46,9 +49,26 @@ function SecretsPage() {
     }));
   }
 
+  function pickImage(file: File | undefined) {
+    setMediaError(null);
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setMediaError("Please choose a photo.");
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      setMediaError("Photo is larger than 4 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImage(typeof reader.result === "string" ? reader.result : null);
+    reader.onerror = () => setMediaError("Could not read that photo.");
+    reader.readAsDataURL(file);
+  }
+
   function post() {
     const body = draft.trim();
-    if (!body) return;
+    if (!body && !image) return;
     update((s) => ({
       feed: [
         {
@@ -56,6 +76,7 @@ function SecretsPage() {
           author: anon ? "anon" : s.profile.username,
           anonymous: anon,
           body,
+          image,
           createdAt: Date.now(),
           reactions: { vibe: 0, curious: 0, savage: 0, lol: 0 },
           mine: null,
@@ -64,7 +85,11 @@ function SecretsPage() {
       ],
     }));
     setDraft("");
+    setImage(null);
+    setMediaError(null);
+    if (fileRef.current) fileRef.current.value = "";
   }
+
 
   return (
     <div className="pb-36">
@@ -180,24 +205,60 @@ function SecretsPage() {
                 aria-label="New Vibe Feed post"
                 className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
-              <div className="mt-2 flex items-center justify-between">
+
+              {image && (
+                <div className="relative mt-2 overflow-hidden rounded-xl border border-glass-border">
+                  <img src={image} alt="Attached photo preview" className="max-h-56 w-full object-cover" />
+                  <button
+                    onClick={() => {
+                      setImage(null);
+                      if (fileRef.current) fileRef.current.value = "";
+                    }}
+                    aria-label="Remove photo"
+                    className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full border border-glass-border bg-background/80 backdrop-blur tap active:tap-active"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              {mediaError && <p className="mt-2 text-xs text-destructive">{mediaError}</p>}
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => pickImage(e.target.files?.[0])}
+              />
+
+              <div className="mt-2 flex min-w-0 items-center gap-2">
                 <button
                   onClick={() => setAnon((a) => !a)}
                   className={cn(
-                    "rounded-full border border-glass-border px-3 py-1.5 text-xs tap active:tap-active",
+                    "min-w-0 truncate rounded-full border border-glass-border px-3 py-1.5 text-xs tap active:tap-active",
                     anon && "bg-gradient-vyzun text-primary-foreground",
                   )}
                 >
                   {anon ? "Anonymous" : `@${state.profile.username}`}
                 </button>
                 <button
+                  onClick={() => fileRef.current?.click()}
+                  aria-label="Attach photo"
+                  title="Attach photo"
+                  className="ml-auto grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-glass-border text-cyan tap active:tap-active"
+                >
+                  <ImagePlus className="h-5 w-5" />
+                </button>
+                <button
                   onClick={post}
-                  className="rounded-xl bg-gradient-vyzun px-4 py-2 text-sm font-semibold text-primary-foreground tap active:tap-active"
+                  disabled={!draft.trim() && !image}
+                  className="shrink-0 rounded-xl bg-gradient-vyzun px-4 py-2 text-sm font-semibold text-primary-foreground tap active:tap-active disabled:opacity-50"
                 >
                   Post
                 </button>
               </div>
             </div>
+
 
             <div className="mt-4 space-y-3">
               {state.feed.map((p) => (
@@ -205,7 +266,15 @@ function SecretsPage() {
                   <p className="text-xs text-muted-foreground">
                     {p.anonymous ? "Anonymous" : `@${p.author}`}
                   </p>
-                  <p className="mt-1.5 text-sm">{p.body}</p>
+                  {p.body && <p className="mt-1.5 text-sm">{p.body}</p>}
+                  {p.image && (
+                    <img
+                      src={p.image}
+                      alt="Vibe Feed attachment"
+                      loading="lazy"
+                      className="mt-3 max-h-80 w-full rounded-xl border border-glass-border object-cover"
+                    />
+                  )}
                   <div className="mt-3 flex gap-2">
                     {REACTIONS.map((r) => (
                       <button
