@@ -5,7 +5,8 @@ export async function renderNodeToPng(node: HTMLElement) {
   const dataUrl = await toPng(node, {
     pixelRatio: 2,
     cacheBust: true,
-    skipFonts: false,
+    // Remote font stylesheets can't be read cross-origin; skip to avoid noisy failures.
+    skipFonts: true,
   });
   const res = await fetch(dataUrl);
   const blob = await res.blob();
