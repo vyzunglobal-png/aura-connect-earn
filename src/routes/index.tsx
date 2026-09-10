@@ -306,7 +306,17 @@ function ScanPage() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={() => runScan()}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const url = await readFile(file);
+                setPhoto(url);
+                runScan(url);
+              } catch {
+                setCameraError("Couldn’t read that photo. Try another one.");
+              }
+            }}
           />
         </div>
 
@@ -315,23 +325,49 @@ function ScanPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Your Aura Card</h2>
               <button
-                onClick={runScan}
+                onClick={() => runScan()}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground tap active:tap-active"
               >
                 <RefreshCcw className="h-3.5 w-3.5" /> Regenerate
               </button>
             </div>
-            <AuraCardView card={card} username={state.profile.username} prime={state.profile.prime} />
+            <AuraCardView
+              ref={cardRef}
+              card={card}
+              username={state.profile.username}
+              prime={state.profile.prime}
+            />
             <button
-              onClick={async () => {
-                const text = `My VYZUN aura is ${card.score} (${card.rarity}). Beat my Aura → VYZUN`;
-                if (navigator.share) await navigator.share({ title: "VYZUN Aura", text }).catch(() => {});
-                else await navigator.clipboard?.writeText(text);
-              }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-vyzun py-3 font-semibold text-primary-foreground tap active:tap-active"
+              onClick={onShare}
+              disabled={busy !== null}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-vyzun py-3 font-semibold text-primary-foreground tap active:tap-active disabled:opacity-60"
             >
-              <Share2 className="h-4 w-4" /> Share “Beat my Aura → VYZUN”
+              <Share2 className="h-4 w-4" />
+              {busy === "share" ? "Preparing image…" : "Share Aura Card"}
             </button>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <button
+                onClick={onDownload}
+                disabled={busy !== null}
+                className="flex items-center justify-center gap-2 rounded-xl border border-glass-border py-3 text-sm font-semibold tap active:tap-active disabled:opacity-60"
+              >
+                <Download className="h-4 w-4" />
+                {busy === "download" ? "Saving…" : "Download Image"}
+              </button>
+              <button
+                onClick={onPostToFeed}
+                disabled={busy !== null}
+                className="flex items-center justify-center gap-2 rounded-xl border border-glass-border py-3 text-sm font-semibold tap active:tap-active disabled:opacity-60"
+              >
+                <Send className="h-4 w-4" />
+                {busy === "post" ? "Posting…" : "Post to Vibe Feed"}
+              </button>
+            </div>
+            {notice && (
+              <p aria-live="polite" className="mt-3 text-center text-xs text-muted-foreground">
+                {notice}
+              </p>
+            )}
           </section>
         )}
 
